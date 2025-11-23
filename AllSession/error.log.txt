@@ -1,0 +1,2 @@
+[2025-11-09 16:28:05] Lỗi ZeroDivisionError: Không thể chia cho 0
+[2025-11-09 16:46:48] Lỗi ZeroDivisionError: Không thể chia cho 0

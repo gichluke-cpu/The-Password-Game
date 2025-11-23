@@ -1,0 +1,6 @@
+Check:
+
+Product name, Quantity, Price
+Pen, 10, 2500
+Notebook, 5, 8000
+Book, a, 15000

@@ -1,0 +1,1 @@
+[2025-11-09 16:47:00] Dòng 3: Lỗi kiểu dữ liệu (ValueError). Chi tiết: could not convert string to float: 'a'. Dữ liệu dòng: 'Book, a, 15000'

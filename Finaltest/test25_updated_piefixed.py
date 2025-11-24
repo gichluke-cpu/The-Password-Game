@@ -84,7 +84,7 @@ DIFFICULTY_SETTINGS = {
     2: { "name": "Normal",  "joker_first": 60,   "joker_interval": 30,   "pie_interval": 30, "bat_cd": 20 },
     3: { "name": "Hard",    "joker_first": 45,   "joker_interval": 20,   "pie_interval": 30, "bat_cd": 20 },
     4: { "name": "Extreme", "joker_first": 30,   "joker_interval": 15,   "pie_interval": 20, "bat_cd": 15 },
-    5: { "name": "Hell",    "joker_first": 20,   "joker_interval": 15,   "pie_interval": 20, "bat_cd": 10 },
+    5: { "name": "Batman",    "joker_first": 20,   "joker_interval": 10,   "pie_interval": 20, "bat_cd": 20 },
 }
 
 # Runtime variables populated from difficulty
@@ -467,7 +467,7 @@ def clown_burn_loop():
             burningsound()
             left -= 1
         if left < 0:
-            show_game_over_screen("Bạn đã chết cháy!🔥")
+            show_game_over_screen("Bạn đã bị Joker 🤡 đốt bỏng đít!🔥")
             return
         if chars[left] != FIRE_EMOJI:
             chars[left] = FIRE_EMOJI

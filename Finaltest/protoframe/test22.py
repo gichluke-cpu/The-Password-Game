@@ -1,4 +1,4 @@
-justice_league = ["batman","superman","flash","wonderwoman","aquaman","greenlantern","martianmanhunter","cyborg","plasticman","greenarrow"]
+
 import string
 import tkinter as tk
 from tkinter import messagebox
@@ -54,6 +54,7 @@ def select_profile_image():
 
 
 # ===== BẮT ĐẦU THÊM NHẠC NỀN =====
+pygame.init()
 pygame.mixer.init()
 def start_background_music():
         # SỬA: Thêm 'r' ở đầu để không lỗi đường dẫn
@@ -66,7 +67,48 @@ def start_background_music():
 # === HÀM MỚI ĐỂ TẮT NHẠC ===
 def stop_background_music():
         pygame.mixer.music.stop()
-
+def slap():
+    pygame.mixer.music.load("C:\WebScrapingLibrary_NeoM2\slapping-sound.mp3")
+        #pygame.mixer.music.set_volume(0.7) # Đặt âm lượng (0.0 đến 1.0)
+        
+        # SỬA: loops=-1 để lặp lại vô hạn
+    pygame.mixer.music.play(loops=0)  
+def deathsound():
+    pygame.mixer.music.load("C:\WebScrapingLibrary_NeoM2\deathsound.mp3")
+        #pygame.mixer.music.set_volume(0.7) # Đặt âm lượng (0.0 đến 1.0)
+        
+        # SỬA: loops=-1 để lặp lại vô hạn
+    pygame.mixer.music.play(loops=0)  
+def clicksound():
+    pygame.mixer.music.load("C:\WebScrapingLibrary_NeoM2\click-sound-for-gd.mp3")
+        #pygame.mixer.music.set_volume(0.7) # Đặt âm lượng (0.0 đến 1.0)
+        
+        # SỬA: loops=-1 để lặp lại vô hạn
+    pygame.mixer.music.play(loops=0)  
+def eatsound():
+    pygame.mixer.music.load("heavyeater.mp3")
+        #pygame.mixer.music.set_volume(0.7) # Đặt âm lượng (0.0 đến 1.0)
+        
+        # SỬA: loops=-1 để lặp lại vô hạn
+    pygame.mixer.music.play(loops=0)  
+def laughsound():
+    pygame.mixer.music.load("hahaha.mp3")
+        #pygame.mixer.music.set_volume(0.7) # Đặt âm lượng (0.0 đến 1.0)
+        
+        # SỬA: loops=-1 để lặp lại vô hạn
+    pygame.mixer.music.play(loops=0)  
+def victory():
+    pygame.mixer.music.load("marios.mp3")
+        #pygame.mixer.music.set_volume(0.7) # Đặt âm lượng (0.0 đến 1.0)
+        
+        # SỬA: loops=-1 để lặp lại vô hạn
+    pygame.mixer.music.play(loops=0) 
+def burningsound():
+    pygame.mixer.music.load("fire-burning.mp3")
+        #pygame.mixer.music.set_volume(0.7) # Đặt âm lượng (0.0 đến 1.0)
+        
+        # SỬA: loops=-1 để lặp lại vô hạn
+    pygame.mixer.music.play(loops=0) 
 # --- XÓA HẾT PHẦN TẠO CỬA SỔ root, Button, on_closing Ở ĐÂY ---
 # (Vì chúng ta sẽ thêm nút nhạc vào màn hình game chính)
 
@@ -103,7 +145,7 @@ PIE_CHECK_ID = None
 MONTHS = ["january", "february", "march", "april", "may", "june", 
           "july", "august", "september", "october", "november", "december"]
 BRANDS = ["pepsi", "pedro", "starbuck"]
-
+justice_league = ["batman","superman","flash","wonderwoman","aquaman","greenlantern","martianmanhunter","cyborg","plasticman","greenarrow"]
 capitals = ["hanoi",              # Vietnam
     "bangkok",            # Thailand
     "vientiane",          # Laos
@@ -185,7 +227,7 @@ def save_high_score(score):
 def show_high_score():
     global HIGH_SCORES
     load_high_scores() # Luôn load dữ liệu mới nhất từ CSV
-
+    
     dialog = tk.Toplevel(root)
     dialog.title("🏆 High Score - Top 5")
     dialog.geometry("600x400")
@@ -358,13 +400,13 @@ def get_rule_status(password):
 
     return {
         "Phải có thành viên Justice League": any(j in pw_lower for j in justice_league),
-        "Kí tự đặc biệt ít hơn chữ thường 1": (sum(1 for c in password if c in string.punctuation) +1 == count_lower),
+        "Kí tự đặc biệt ít hơn chữ thường 5": (sum(1 for c in password if c in string.punctuation) +5 == count_lower),
 
-        "Ít nhất một chữ hoa": any(c.isupper() for c in password),
-        "Ít nhất một số": any(c.isdigit() for c in password), 
-        "Ít nhất một ký tự đặc biệt": any(c in string.punctuation for c in password),
+        #"Ít nhất một chữ hoa": any(c.isupper() for c in password),
+        #"Ít nhất một số": any(c.isdigit() for c in password), 
+        #"Ít nhất một ký tự đặc biệt": any(c in string.punctuation for c in password),
         "Tổng các số phải bằng 25": rule_sum_check,
-        "Không chứa từ 'password'": "password" not in pw_lower,
+        #"Không chứa từ 'password'": "password" not in pw_lower,
         "Phải có tên một tháng (Eng)": any(m in pw_lower for m in MONTHS),
         "Phải có thành viên Justice League": any(m in pw_lower for m in justice_league),
         "Phải có tên một thủ đô ASEAN (Eng-Viết liền)": any(m in pw_lower for m in capitals),
@@ -384,6 +426,8 @@ def check_rules(event=None):
     # Instant loss: more than 3 pies
     if password.count(PIE_EMOJI) > 3:
         stop_game()
+        pygame.mixer.init()
+        pygame.mixer.Sound("C:\WebScrapingLibrary_NeoM2\deathsound.mp3").play()
         show_game_over_screen(f"Mật khẩu không được chứa quá 3 emoji bánh ({PIE_EMOJI}).")
         return
 
@@ -398,7 +442,7 @@ def check_rules(event=None):
         success = rules.get(rule_key, False)
 
         if rule_key == "Phải có dòng chữ ngược":
-            text = f"Phải có dòng chữ ngược của '{REQUIRED_REVERSED_STRING}'"
+           text = f"Phải có dòng chữ ngược của '{REQUIRED_REVERSED_STRING}'"
         elif rule_key == "Chữ thường phải gấp đôi chữ hoa":
             text = f"Chữ thường ({count_lower}) phải gấp đôi chữ hoa ({count_upper})"
         elif rule_key == "Tổng số chữ hoa là số nguyên tố":
@@ -462,14 +506,14 @@ def stop_timer():
 # ===============================================================
 
 def add_pie_emoji():
-    global PIE_EMOJI_COUNT, last_pie_time
 
+    global PIE_EMOJI_COUNT, last_pie_time
     pw = entry_password.get()
     if pw.count(PIE_EMOJI) >= 3:
         stop_game()
         show_game_over_screen("Bạn đã ăn quá nhiều bánh!")
         return
-
+    eatsound()
     pw += PIE_EMOJI
     entry_password.delete(0, tk.END)
     entry_password.insert(0, pw)
@@ -477,6 +521,7 @@ def add_pie_emoji():
     PIE_EMOJI_COUNT = pw.count(PIE_EMOJI)
     last_pie_time = time.time()
     check_rules()
+
 
 
 def check_pie_rule():
@@ -501,9 +546,8 @@ def check_pie_rule():
             PIE_EMOJI_COUNT -= 1
             last_pie_time = time.time()
 
-
             check_rules()
-            
+
         else:
             stop_game()
             show_game_over_screen("Bạn đã chết đói vì không có bánh!")
@@ -521,7 +565,62 @@ def cancel_pie_check():
 # ===============================================================
 #  GAME FLOW CONTROL
 # ===============================================================
+def show_victory_screen(final_time_str):
+    stop_game()
+    victory()
 
+    # Clear old widgets
+    for w in root.winfo_children():
+        w.destroy()
+
+    # Create canvas
+    canvas = tk.Canvas(root, highlightthickness=0, bd=0)
+    canvas.pack(fill="both", expand=True)
+
+    # Load & resize victory image
+    victory_img = Image.open("Victory.png")
+    victory_img = victory_img.resize(
+        (root.winfo_width(), root.winfo_height()),
+        Image.LANCZOS
+    )
+    victory_tk = ImageTk.PhotoImage(victory_img)
+
+    canvas.v_img = victory_tk  
+    canvas.create_image(0, 0, anchor="nw", image=victory_tk)
+
+    # Time text on top of image
+    canvas.create_text(
+        root.winfo_width() // 2,
+        root.winfo_height() - 80,
+        text=f"⏱ Time: {final_time_str}",
+        fill="white",
+        font=("Georgia", 28, "bold"),
+        outline="black"
+    )
+#=====================================================================================================================================================================
+def show_stupid_image():
+    stupid_win = tk.Toplevel(root)
+    stupid_win.title("Incorrect!")
+    stupid_win.geometry("600x400")
+    stupid_win.resizable(False, False)
+
+    # Load image
+    img = Image.open("C:\WebScrapingLibrary_NeoM2\stupidslap.jpg")
+    img = img.resize((600, 400))
+    img_tk = ImageTk.PhotoImage(img)
+
+    # Keep reference to avoid garbage collection
+    stupid_win.img_ref = img_tk
+
+    # Display image
+    label = tk.Label(stupid_win, image=img_tk)
+    label.pack(fill="both", expand=True)
+
+    # Optional: auto-close after 2 seconds
+    stupid_win.after(2000, stupid_win.destroy)
+
+    
+#====================================================================================================================================================================
 def submit_password():
     global start_time
 
@@ -538,11 +637,12 @@ def submit_password():
 
         save_high_score(final)
 
-        messagebox.showinfo("You win!", f"🎉 Thời gian: {ts}")
-        show_main_menu()
-    else:
-        messagebox.showerror("Thất bại", "STUPID!")
+        show_victory_screen(ts)
+        victory()
 
+    else:
+        show_stupid_image()
+        slap()
 def stop_game():
     global game_running
     game_running = False
@@ -558,13 +658,17 @@ def stop_game():
 def show_main_menu():
     reset_timer()
     stop_game()
-
+    #clicksound()
     for w in root.winfo_children():
         w.destroy()
 
     frame = tk.Frame(root, bg="#fdf8e4")
     frame.pack(expand=True, fill="both")
+     # Create canvas for background image
+    canvas = tk.Canvas(root, highlightthickness=0, bd=0)
+    canvas.pack(fill="both", expand=True)
 
+    
     tk.Label(frame, text="*** The Password Game ***", font=("Georgia", 24, "bold"),
              bg="#fdf8e4").pack(pady=(50, 20))
 
@@ -575,7 +679,7 @@ def show_main_menu():
               #command=lambda: show_game_screen(""),
               #bg="#a3d9a5").pack(pady=10)
     tk.Button(bf, text="New Game", font=("Georgia", 14), width=15,
-         command=show_player_setup, # Chỉ gọi tên hàm, KHÔNG CÓ ngoặc đơn () hay đối số
+         command=show_player_setup,# Chỉ gọi tên hàm, KHÔNG CÓ ngoặc đơn () hay đối số
          bg="#a3d9a5").pack(pady=10)
     tk.Button(bf, text="High Score", font=("Georgia", 14), width=15,
               command=show_high_score,
@@ -590,7 +694,7 @@ def show_player_setup():
     
     # Reset biến toàn cục khi bắt đầu màn hình setup
     PLAYER_IMAGE_PATH = "" 
-    
+    clicksound()
     for w in root.winfo_children():
         w.destroy()
 
@@ -628,12 +732,14 @@ def show_player_setup():
 
     # --- NÚT BẮT ĐẦU GAME ---
     def start_game_with_profile():
+        clicksound()
         global PLAYER_NAME
         # Lấy tên và gán giá trị mặc định nếu rỗng
         input_name = entry_name.get().strip()
         PLAYER_NAME = input_name if input_name else "No-Name"
         
         # Chuyển sang màn hình chơi game
+        clicksound()
         show_game_screen("")
 
     tk.Button(frame, text="▶️BẮT ĐẦU GAME!", font=("Georgia", 14, "bold"), width=20,
@@ -649,10 +755,10 @@ def show_player_setup():
 def show_game_screen(initial_password=""):
     global game_frame, entry_password, length_label, rule_labels
     global timer_label, PIE_EMOJI_COUNT, last_pie_time, game_running
-
+    clicksound()
     game_running = True
     cancel_pie_check()
-
+    
     is_new = (initial_password == "")
     if is_new:
         generate_random_string()
@@ -714,14 +820,14 @@ def show_game_screen(initial_password=""):
 
     rule_labels = {}
     all_rules = [
-        "Ít nhất một chữ hoa",
-        "Ít nhất một số",
-        "Ít nhất một ký tự đặc biệt",
+        #"Ít nhất một chữ hoa",
+        #"Ít nhất một số",
+        #"Ít nhất một ký tự đặc biệt",
         "Tổng các số phải bằng 25",
-        "Không chứa từ 'password'",
+        #"Không chứa từ 'password'",
         "Phải có tên một tháng (Eng)",
         "Phải có thành viên Justice League",
-        "Kí tự đặc biệt ít hơn chữ thường 1",
+        "Kí tự đặc biệt ít hơn chữ thường 5",
         "Phải có tên một thủ đô ASEAN (Eng-Viết liền)",
         "Phải chứa 'Pepsi', 'Pedro', hoặc 'Starbuck'",
         "Phải có dòng chữ ngược",
@@ -784,6 +890,7 @@ def show_game_screen(initial_password=""):
     root.wait_window(dialog)'''
 # 💡 Thay thế hàm show_high_score cũ bằng hàm sau:
 def show_high_score():
+    clicksound()
     global HIGH_SCORES
 
     dialog = tk.Toplevel(root)
@@ -850,7 +957,7 @@ def show_high_score():
 def show_exit_dialog():
     """Shows the exit-popup with 3 buttons (NEW)."""
     stop_timer()  # FULL STOP
-
+    clicksound()
     dialog = tk.Toplevel(root)
     dialog.title("Exit")
     dialog.geometry("360x170")
@@ -883,10 +990,14 @@ GAME_OVER_BG = "C:\WebScrapingLibrary_NeoM2\Dark-Souls-You-Died.jpg"   # <-- ren
 
 def show_game_over_screen(reason):
     stop_game()
+    stop_background_music()
+    deathsound()
 
     # Clear old widgets
     for w in root.winfo_children():
         w.destroy()
+
+
 
     # Create canvas for background image
     canvas = tk.Canvas(root, highlightthickness=0, bd=0)
@@ -1011,7 +1122,7 @@ def show_exit_dialog2():
 CLOWN_EMOJI = "🤡"
 FIRE_EMOJI = "🔥"
 
-CLOWN_FIRST_APPEAR = 60
+CLOWN_FIRST_APPEAR = 45
 CLOWN_INTERVAL = 20
 CLOWN_BURN_INTERVAL = 1
 
@@ -1020,6 +1131,7 @@ clown_spawn_loop_id = None
 clown_burn_loop_id = None
 
 def add_clown_emoji():
+    laughsound()
     pw = entry_password.get()
     pw += CLOWN_EMOJI
     entry_password.delete(0, tk.END)
@@ -1047,14 +1159,17 @@ def clown_burn_loop():
     clown_positions = [i for i,c in enumerate(chars) if c == CLOWN_EMOJI]
     if not clown_positions:
         clown_burn_loop_id = root.after(1000, clown_burn_loop)
+
         return
     all_burned = True
     for pos in clown_positions:
         left = pos - 1
+
         if left < 0:
             show_game_over_screen(" Joker 🤡 đã bắt cóc mẹ bạn! ")
             return
         while left >= 0 and chars[left] == FIRE_EMOJI:
+            burningsound()
             left -= 1
         if left < 0:
             show_game_over_screen("Bạn đã chết cháy!🔥")
@@ -1089,7 +1204,7 @@ def show_game_screen(initial_password=""):
     _old_show_game_screen(initial_password)
     clown_last_spawn = -1
     clown_spawn_loop()
-    clown_burn_loop()
+    clown_burn_loop() 
 root = tk.Tk()
 root.title("The Password Game")
 root.geometry("800x600")

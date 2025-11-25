@@ -59,7 +59,27 @@ import pygame
 from PIL import Image, ImageTk
 from tkinter import filedialog
 
+# ----------------------------
+# BANE (ENEMY) SYSTEM
+# ----------------------------
+BANE_FIRST_APPEAR = 70  # 2 minutes
+BANE_INTERVAL_BASE = 60  # 1:30 (base)
+bane_last_spawn = -1
+bane_spawn_loop_id = None
+bane_disabled_until = 0.0
+clown_hold_until = 0.0  # when Joker is held due to Bane outcome
+# Minigame starting times per difficulty (seconds)
+BANE_MINIGAME_START = {1:40, 2:30, 3:23, 4:17, 5:10}
+# Images for Bane sequences (use exact filenames)
+BANE_IMG_1 = "aWildBaneAppear.jpg"       # initial encounter
+BANE_IMG_2 = "BatmanVsBane1.avif"        # fight/minigame background
+BANE_IMG_3 = "batmanbreaksbane.avif"     # player victory image
+BANE_IMG_4 = "banebreaksjoker.avif"      # Bane busy with Joker
+BANE_IMG_5 = "breakbatman.jpg"           # player defeat image
+
+
 def show_batman_beats_joker_screen():
+    jokerscream()
     try:
         import tkinter as tk
         from PIL import Image, ImageTk
@@ -170,7 +190,13 @@ def sekirosnakesound():
 def howlsound():
     play_sound(r"C:\WebScrapingLibrary_NeoM2\sekiro-kite-man.mp3")
 def rapidpunchsound():
-    play_sound(r"rapidpunches.mp3")
+    play_sound(r"C:\WebScrapingLibrary_NeoM2\dbz-rapid-punches-sfx.mp3")
+def cracksound():
+    play_sound(r"C:\WebScrapingLibrary_NeoM2\breakerspine.mp3")
+def jokerscream():
+    play_sound(r"C:\WebScrapingLibrary_NeoM2\jokerscream.mp3")
+def baneappear():
+    play_sound(r"C:\WebScrapingLibrary_NeoM2\batmanvsbanetheme.mp3")
 # ----------------------------
 # FILE & HIGHSCORE CONFIG
 # ----------------------------
@@ -185,8 +211,8 @@ DIFFICULTY_SETTINGS = {
     1: { "name": "Easy",    "joker_first": 90,   "joker_interval": 35,   "pie_interval": 45, "bat_cd": 20 },
     2: { "name": "Normal",  "joker_first": 60,   "joker_interval": 30,   "pie_interval": 30, "bat_cd": 20 },
     3: { "name": "Hard",    "joker_first": 45,   "joker_interval": 20,   "pie_interval": 30, "bat_cd": 20 },
-    4: { "name": "Extreme", "joker_first": 30,   "joker_interval": 15,   "pie_interval": 20, "bat_cd": 15 },
-    5: { "name": "Batman",    "joker_first": 20,   "joker_interval": 10,   "pie_interval": 20, "bat_cd": 10 },
+    4: { "name": "Batman", "joker_first": 30,   "joker_interval": 15,   "pie_interval": 20, "bat_cd": 15 },
+    5: { "name": "Absolute Batman",    "joker_first": 20,   "joker_interval": 10,   "pie_interval": 20, "bat_cd": 10 },
 }
 
 # Runtime variables populated from difficulty
@@ -438,7 +464,8 @@ def get_rule_status(password):
 
     return {
         "Phải có thành viên Justice League": any(j in pw_lower for j in justice_league),
-        "Kí tự đặc biệt ít hơn chữ thường 5": (sum(1 for c in password if c in string.punctuation) +5 == count_lower),
+        "Kí tự đặc biệt ít hơn chữ thường 5": (sum(1 for c in password if (c in string.punctuation or c in ("🤡","🔥","🦇","🥧"))) +5 == count_lower),
+        #"Kí tự đặc biệt ít hơn chữ thường 5": (sum(1 for c in password if c in string.punctuation) +5 == count_lower),
         "Tổng các số phải bằng 25": rule_sum_check,
         "Phải có tên một tháng (Eng)": any(m in pw_lower for m in MONTHS),
         "Phải có tên một thủ đô ASEAN (Eng-Viết liền)": any(m in pw_lower for m in capitals),
@@ -609,6 +636,345 @@ def summon_batman():
             show_batman_beats_joker_screen()
     root.after(500, cleanse)
 
+
+# ----------------------------
+# Bane encounter & minigame
+# ----------------------------
+def show_bane_encounter():
+    """Display initial Bane image with Accept/Decline buttons beneath it."""
+    try:
+        top = tk.Toplevel(root)
+        top.title("BANE APPEARS")
+        top.geometry("620x460")
+        top.transient(root)
+        top.grab_set()
+        frame = tk.Frame(top, bg="#000")
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        sekirosnakesound()
+        
+        try:
+            img = Image.open(BANE_IMG_1)
+            img = img.resize((580,300), Image.LANCZOS)
+            img_tk = ImageTk.PhotoImage(img)
+            lbl = tk.Label(frame, image=img_tk, bg="#000")
+            lbl.image = img_tk
+            lbl.pack(pady=6)
+        except Exception:
+            tk.Label(frame, text="BANE APPEARS!", font=("Georgia", 20, "bold"), bg="#000", fg="white").pack(pady=20)
+
+        btn_frame = tk.Frame(frame, bg="#000")
+        btn_frame.pack(pady=6)
+        # Decline button
+        def decline():
+            top.destroy()
+            handle_bane_decline()
+            clicksound()
+        # Accept button
+        def accept():
+            top.destroy()
+            handle_bane_accept()
+            clicksound()
+        tk.Button(btn_frame, text="Decline", width=12, command=decline, bg="#f8d7da").pack(side="left", padx=8)
+        tk.Button(btn_frame, text="Accept", width=12, command=accept, bg="#a3d9a5").pack(side="left", padx=8)
+    except Exception:
+        pass
+
+def handle_bane_decline():
+    """Handle decline: 35% chance scramble password and blur rules, 100% remove pies."""
+    try:
+        # remove all pie emojis
+        pw = entry_password.get()
+        new_pw = pw.replace(PIE_EMOJI, "")
+        entry_password.delete(0, tk.END)
+        entry_password.insert(0, new_pw)
+        # 35% chance scramble and blur rules
+        if random.random() < 0.435:
+            # scramble password characters
+            s = list(entry_password.get())
+            random.shuffle(s)
+            entry_password.delete(0, tk.END)
+            entry_password.insert(0, "".join(s))
+            # blur rules: set text to asterisks
+            for k, lbl in rule_labels.items():
+                try:
+                    lbl.config(text="*******", fg="gray", bg="#fdf8e4")
+                except Exception:
+                    pass
+        check_rules()
+    except Exception:
+        pass
+
+def handle_bane_accept():
+    """Start minigame: freeze main time and run number-typing minigame."""
+    try:
+        # freeze main time and game loops
+        global timer_running, game_running, bane_disabled_until, clown_hold_until, last_bat_time
+        timer_was_running = timer_running
+        timer_running = False
+
+        # Setup minigame Toplevel
+        mg = tk.Toplevel(root)
+        mg.title("Bane Duel")
+        mg.geometry("620x420")
+        mg.transient(root)
+        mg.grab_set()
+        frame = tk.Frame(mg, bg="#000")
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # show battle image
+        try:
+            img = Image.open(BANE_IMG_2)
+            img = img.resize((580,260), Image.LANCZOS)
+            img_tk = ImageTk.PhotoImage(img)
+            img_lbl = tk.Label(frame, image=img_tk, bg="#000")
+            img_lbl.image = img_tk
+            img_lbl.pack(pady=6)
+        except Exception:
+            tk.Label(frame, text="BATTLE", font=("Georgia", 20, "bold"), bg="#000", fg="white").pack(pady=10)
+
+        # minigame timer
+        start_val = BANE_MINIGAME_START.get(int(CURRENT_DIFFICULTY), 30)
+        current_val = {"v": start_val}
+        timer_display = tk.Label(frame, text=f"{current_val['v']}", font=("Georgia", 36, "bold"), fg="white", bg="#000")
+        timer_display.pack(pady=6)
+        info = tk.Label(frame, text="Type digits 0-9 to add. Bane will subtract.", fg="white", bg="#000")
+        info.pack()
+
+        # input entry for digits
+        entry = tk.Entry(frame, width=10, font=("Georgia", 18))
+        entry.pack(pady=6)
+        entry.focus_set()
+
+        # prevent typing same number thrice
+        last_inputs = []
+
+        # flag to stop loops
+        stop_flags = {"stop": False}
+
+        # function to update display
+        def update_display():
+            timer_display.config(text=f"{current_val['v']}")
+
+        # player's input handler
+        def on_input(event=None):
+            if stop_flags["stop"]:
+                return
+            val = entry.get().strip()
+            if not val:
+                return
+            ch = val[-1]
+            if ch not in "0123456789":
+                entry.delete(0, tk.END)
+                return
+
+            # enforce cannot type same number thrice in a row
+            if len(last_inputs) >= 2 and last_inputs[-1] == last_inputs[-2] == ch:
+                entry.delete(0, tk.END)
+                return
+
+            last_inputs.append(ch)
+            if len(last_inputs) > 10:
+                last_inputs.pop(0)
+
+            entry.delete(0, tk.END)
+
+            # Bane picks a random digit
+            bane_choice = str(random.randint(0, 9))
+
+            # if both same -> cancel
+            if bane_choice != ch:
+                # apply player's add
+                try:
+                    current_val['v'] += int(ch)
+                except:
+                    pass
+                # apply Bane subtract
+                try:
+                    current_val['v'] -= int(bane_choice)
+                except:
+                    pass
+
+            # clamp and update
+            if current_val['v'] > 999:
+                current_val['v'] = 999
+
+            update_display()
+
+            # check win/lose
+            if current_val['v'] >= 150:
+                stop_flags["stop"] = True
+                mg.after(200, lambda: end_minigame_win(mg))
+            elif current_val['v'] <= 0:
+                stop_flags["stop"] = True
+                mg.after(200, lambda: end_minigame_lose(mg))
+
+        entry.bind("<KeyRelease>", on_input)
+
+        # Bane’s rapid number generation (4 numbers per second)
+        def bane_tick():
+            if stop_flags["stop"]:
+                return
+
+            bch = str(random.randint(0, 9))
+
+            try:
+                current_val['v'] -= int(bch)
+            except:
+                pass
+
+            update_display()
+
+            if current_val['v'] <= 0:
+                stop_flags["stop"] = True
+                mg.after(200, lambda: end_minigame_lose(mg))
+                return
+
+            mg.after(600, bane_tick)   # 
+
+        mg.after(600, bane_tick)
+
+    except Exception:
+        try:
+            timer_running = timer_was_running
+        except:
+            pass
+
+
+def end_minigame_win(mg_window):
+    """Player wins the minigame: show victory image, banish Bane for 4 minutes, chance to delay Joker."""
+    try:
+        mg_window.destroy()
+    except Exception:
+        pass
+    # show image 3 for 2 seconds
+    try:
+        top = tk.Toplevel(root)
+        top.overrideredirect(True)
+        top.geometry("800x600")
+        frame = tk.Frame(top, bg="black")
+        frame.pack(fill="both", expand=True)
+        img = Image.open(BANE_IMG_3)
+        img = img.resize((800,600), Image.LANCZOS)
+        img_tk = ImageTk.PhotoImage(img)
+        lbl = tk.Label(frame, image=img_tk, bg="black")
+        lbl.image = img_tk
+        lbl.pack()
+        cracksound()
+        # Banefor 4 minutes
+        now = get_current_elapsed_time()
+        global bane_disabled_until, clown_hold_until
+        bane_disabled_until = now + 180.0
+        # 65% chance to delay Joker's next appearance by difficulty amount
+        if random.random() < 0.30:
+            jokerscream()
+            add = 60 if int(CURRENT_DIFFICULTY) in (1,2) else (40 if int(CURRENT_DIFFICULTY)==3 else 30)
+            clown_hold_until = get_current_elapsed_time() + add
+            # show image 4 briefly
+            try:
+                img2 = Image.open(BANE_IMG_4)
+                img2 = img2.resize((800,600), Image.LANCZOS)
+                img2_tk = ImageTk.PhotoImage(img2)
+                lbl2 = tk.Label(top, image=img2_tk, bg="black")
+                lbl2.image = img2_tk
+                lbl2.place(relx=0.5, rely=0.5, anchor="center")
+            except Exception:
+                pass
+        top.after(2000, top.destroy)
+    except Exception:
+        pass
+    # resume game loops
+    continue_timer()
+    check_pie_rule()
+    try:
+        clown_spawn_loop()
+        clown_burn_loop()
+    except Exception:
+        pass
+
+def end_minigame_lose(mg_window):
+    """Player loses: disable Batman for 1 minute and show defeat image."""
+    try:
+        mg_window.destroy()
+    except Exception:
+        pass
+    try:
+        top = tk.Toplevel(root)
+        top.overrideredirect(True)
+        top.geometry("800x600")
+        frame = tk.Frame(top, bg="black")
+        frame.pack(fill="both", expand=True)
+        img = Image.open(BANE_IMG_5)
+        img = img.resize((800,600), Image.LANCZOS)
+        img_tk = ImageTk.PhotoImage(img)
+        lbl = tk.Label(frame, image=img_tk, bg="black")
+        lbl.image = img_tk
+        lbl.pack()
+        cracksound()
+        top.after(2000, top.destroy)
+    except Exception:
+        pass
+    # disable Batman for 60 seconds
+    global last_bat_time, bane_disabled_until
+    last_bat_time = time.time()  # push last bat time so summon is on cooldown
+    bane_disabled_until = time.time() + 60.0
+    # resume game loops
+    continue_timer()
+    check_pie_rule()
+    try:
+        clown_spawn_loop()
+        clown_burn_loop()
+    except Exception:
+        pass
+
+
+def bane_spawn_loop():
+    """Loop that triggers Bane appearances. Ensures initial guaranteed spawn at 2:00 (unless peaceful),
+    but waits until Joker (if present) is gone before showing. Subsequent spawns happen roughly every
+    BANE_INTERVAL_BASE seconds (±30s) unless Bane is banished (bane_disabled_until) or Joker is holding."""
+    global bane_last_spawn, bane_spawn_loop_id, bane_disabled_until, clown_hold_until, clown_last_spawn
+    if not game_running:
+        return
+    if int(CURRENT_DIFFICULTY) == 0:
+        # peaceful mode: do not spawn
+        return
+
+    elapsed = get_current_elapsed_time()
+
+    # Helper: is Joker currently in the password field?
+    try:
+        current_pw = entry_password.get()
+    except Exception:
+        current_pw = ""
+    joker_present = (CLOWN_EMOJI in current_pw)
+
+    # INITIAL guaranteed spawn at or after 2:00 (if not yet spawned)
+    if bane_last_spawn == -1 and elapsed >= BANE_FIRST_APPEAR and elapsed >= bane_disabled_until:
+        # If Joker emoji currently present, wait until it's removed (i.e., appear as soon as possible after Joker disappears)
+        if joker_present or elapsed < clown_hold_until:
+            # wait and try again later; do not advance bane_last_spawn so initial spawn remains guaranteed
+            pass
+        else:
+            bane_last_spawn = elapsed
+            baneappear()
+            show_bane_encounter()
+
+    # SUBSEQUENT spawns: roughly every BANE_INTERVAL_BASE +/- 30s after last spawn
+    if bane_last_spawn != -1 and elapsed - bane_last_spawn >= (BANE_INTERVAL_BASE + random.randint(-30,30)):
+        # don't spawn if Bane is currently banished or Joker is present/being held
+        if elapsed < bane_disabled_until or elapsed < clown_hold_until or (CLOWN_EMOJI in entry_password.get() if entry_password else False):
+            pass
+        else:
+            bane_last_spawn = elapsed
+            baneappear()
+            show_bane_encounter()
+
+    try:
+        bane_spawn_loop_id = root.after(1500, bane_spawn_loop)
+    except Exception:
+        # ignore scheduling errors
+        pass
+
+
 # ----------------------------
 # GAME FLOW CONTROL
 # ----------------------------
@@ -709,6 +1075,10 @@ rule_labels = {}
 game_frame = None
 
 def show_game_screen(initial_password=""):
+    global bane_last_spawn, bane_disabled_until, clown_hold_until
+    bane_last_spawn = -1
+    bane_disabled_until = 0
+    clown_hold_until = 0
     global game_frame, entry_password, length_label, rule_labels, timer_label, PIE_EMOJI_COUNT, last_pie_time, game_running, clown_last_spawn
     clicksound()
     game_running = True
@@ -778,6 +1148,7 @@ def show_game_screen(initial_password=""):
     clown_last_spawn = -1
     clown_spawn_loop()
     clown_burn_loop()
+    bane_spawn_loop()
 
 # ----------------------------
 # SUBMIT & HELPERS

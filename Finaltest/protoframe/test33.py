@@ -62,7 +62,7 @@ from tkinter import filedialog
 # ----------------------------
 # BANE (ENEMY) SYSTEM
 # ----------------------------
-BANE_FIRST_APPEAR = 70  # 2 minutes
+BANE_FIRST_APPEAR =70
 BANE_INTERVAL_BASE = 60  # 1:30 (base)
 bane_last_spawn = -1
 bane_spawn_loop_id = None

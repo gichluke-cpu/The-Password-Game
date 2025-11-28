@@ -42,10 +42,7 @@ def play_death_gif_then_gameover(reason):
 
 # Original game over screen renamed
 
-# test25_updated.py
-# Complete merged file with difficulty selection, per-difficulty high scores,
-# Joker (clown), pie (food), and Batman cooldown adjusted per difficulty.
-# Based on user's original test25.py and the requested changes.
+
 
 import string
 import tkinter as tk
@@ -54,7 +51,7 @@ import re
 import random
 import time
 import csv
-import os
+import os 
 import pygame
 from PIL import Image, ImageTk
 from tkinter import filedialog
@@ -678,9 +675,8 @@ def show_bane_encounter():
         tk.Button(btn_frame, text="Accept", width=12, command=accept, bg="#a3d9a5").pack(side="left", padx=8)
     except Exception:
         pass
-
+"""Handle decline: 35% chance scramble password and blur rules, 100% remove pies."""
 def handle_bane_decline():
-    """Handle decline: 35% chance scramble password and blur rules, 100% remove pies."""
     try:
         # remove all pie emojis
         pw = entry_password.get()
@@ -688,7 +684,7 @@ def handle_bane_decline():
         entry_password.delete(0, tk.END)
         entry_password.insert(0, new_pw)
         # 35% chance scramble and blur rules
-        if random.random() < 0.435:
+        if random.random() < 0.275:
             # scramble password characters
             s = list(entry_password.get())
             random.shuffle(s)
@@ -864,7 +860,6 @@ def end_minigame_win(mg_window):
         now = get_current_elapsed_time()
         global bane_disabled_until, clown_hold_until
         bane_disabled_until = now + 180.0
-        # 65% chance to delay Joker's next appearance by difficulty amount
         if random.random() < 0.30:
             jokerscream()
             add = 60 if int(CURRENT_DIFFICULTY) in (1,2) else (40 if int(CURRENT_DIFFICULTY)==3 else 30)
@@ -926,16 +921,14 @@ def end_minigame_lose(mg_window):
     except Exception:
         pass
 
-
-def bane_spawn_loop():
-    """Loop that triggers Bane appearances. Ensures initial guaranteed spawn at 2:00 (unless peaceful),
+"""Loop that triggers Bane appearances. Ensures initial guaranteed spawn at 2:00 (unless peaceful),
     but waits until Joker (if present) is gone before showing. Subsequent spawns happen roughly every
     BANE_INTERVAL_BASE seconds (±30s) unless Bane is banished (bane_disabled_until) or Joker is holding."""
+def bane_spawn_loop():
     global bane_last_spawn, bane_spawn_loop_id, bane_disabled_until, clown_hold_until, clown_last_spawn
     if not game_running:
         return
-    if int(CURRENT_DIFFICULTY) == 0:
-        # peaceful mode: do not spawn
+    if int(CURRENT_DIFFICULTY) == 0:        # peaceful mode: do not spawn
         return
 
     elapsed = get_current_elapsed_time()
@@ -954,24 +947,19 @@ def bane_spawn_loop():
             # wait and try again later; do not advance bane_last_spawn so initial spawn remains guaranteed
             pass
         else:
-            bane_last_spawn = elapsed
+            bane_last_spawn = elapsed     # SUBSEQUENT spawns: roughly every BANE_INTERVAL_BASE +/- 30s after last spawn
             baneappear()
             show_bane_encounter()
-
-    # SUBSEQUENT spawns: roughly every BANE_INTERVAL_BASE +/- 30s after last spawn
-    if bane_last_spawn != -1 and elapsed - bane_last_spawn >= (BANE_INTERVAL_BASE + random.randint(-30,30)):
-        # don't spawn if Bane is currently banished or Joker is present/being held
+    if bane_last_spawn != -1 and elapsed - bane_last_spawn >= (BANE_INTERVAL_BASE + random.randint(-30,30)):       # don't spawn if Bane is currently banished or Joker is present/being held
         if elapsed < bane_disabled_until or elapsed < clown_hold_until or (CLOWN_EMOJI in entry_password.get() if entry_password else False):
             pass
         else:
             bane_last_spawn = elapsed
             baneappear()
             show_bane_encounter()
-
     try:
         bane_spawn_loop_id = root.after(1500, bane_spawn_loop)
-    except Exception:
-        # ignore scheduling errors
+    except Exception:         # ignore scheduling errors
         pass
 
 
